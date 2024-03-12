@@ -32,34 +32,28 @@ class Pic1:
         self.ui.pushButton_2.clicked.connect(self.startAction)
         self.ui.pushButton_3.clicked.connect(self.saveImage)
 
-    # 选择本地图片上传
     def openImage(self):
-        global imgNamepath, imgType # 这里为了方便别的地方引用图片路径，将其设置为全局变量
-        imgNamepath, imgType = QFileDialog.getOpenFileName(None, "选择图片", "D:\project\Qtdesigner", "*.jpg;;*.png;;*.gif;;*.mp4;;All Files(*)")
+        global imgNamepath, imgType
+        imgNamepath, imgType = QFileDialog.getOpenFileName(None, "select pic or video", "D:\ur path", "*.jpg;;*.png;;*.gif;;*.mp4;;All Files(*)")
         if imgType == "*.jpg" or imgType == "*.png":
             img = QPixmap(imgNamepath).scaled(self.ui.label_3.size(), aspectMode=Qt.KeepAspectRatio)
             # print("img: ", img.width(), img.height())
             # self.ui.label_3.setFixedSize(img.width(), img.height())
-            # 在label控件上显示选择的图片
             self.ui.label_3.setPixmap(img)
             self.ui.label_3.repaint()
-            # 显示所选图片的路径
             self.ui.lineEdit.setText(imgNamepath)
         elif imgType == "*.gif":
             img = QMovie(imgNamepath)
             # img_size = QPixmap(imgNamepath).scaled(self.ui.label_3.size(), aspectMode=Qt.KeepAspectRatio)
             # print(img_size)
             # self.ui.label_3.setFixedSize(img_size.width(), img_size.height())
-            # 照片会动img.start()
-            # 在label控件上显示选择的图片
+            # img.start()
             self.ui.label_3.setMovie(img)
             img.start()
-            # 显示所选图片的路径
             self.ui.lineEdit.setText(imgNamepath)
         # elif imgType == "*.mp4":
         #     image_name = imgNamepath.split(".")[0]
         #     video = VideoFileClip(imgNamepath)
-            # 构造mp3文件名
             # file_list = list(video)
             # file_list[-1] = '3'
             # file_name_mp3 = image_name + ".mp3"
@@ -69,14 +63,14 @@ class Pic1:
 
     def saveImage(self):
         img = self.ui.graphicsView_2.pixmap().toImage()
-        fpath, ftype = QFileDialog.getSaveFileName(self.ui, "保存", "D:\\", "*.jpg;;*.png;;*.gif;;All Files(*)")
+        fpath, ftype = QFileDialog.getSaveFileName(self.ui, "save", "D:\\", "*.jpg;;*.png;;*.gif;;All Files(*)")
         img.save(fpath)
 
     def startAction(self):
         net = Generator()
         net.load_state_dict(torch.load("D:\project\Qtdesigner\weights\paint_512_v2.pt", map_location="cpu"))
         net.to("cpu").eval()
-        # print(torch.cuda.is_available()) # 查看gpu是否可用，选择英伟达cuda版本 https://developer.nvidia.com/cuda-toolkit-archive
+        # print(torch.cuda.is_available()) # inspect gpu is useful find gpu version https://developer.nvidia.com/cuda-toolkit-archive
 
         # img = Image.open(imgNamepath).convert("RGB")
         # x32 = False
@@ -86,7 +80,7 @@ class Pic1:
         #
         #     w, h = img.size
         #     img = img.resize((to_32s(w), to_32s(h)))
-        print("开始加载数据.......")
+        print("loading data.......")
         if imgType == "*.gif":
             img = Image.open(imgNamepath)
             out_images = []
@@ -100,9 +94,8 @@ class Pic1:
                     out_images.append(out)
             image_name = imgNamepath.split(".")[0]
             imageio.mimsave(image_name + "_animegan" + ".gif", out_images, fps=15)
-            print("图片保存成功！！")
+            print("save successful")
             img_gif = QMovie(image_name + "_animegan" + ".gif")
-            # 在label控件上显示选择的图片
             self.ui.label_4.setMovie(img_gif)
             img_gif.start()
         elif imgType == "*.jpg" or imgType == "*.png":
@@ -114,7 +107,7 @@ class Pic1:
                 out = to_pil_image(out)
             image_name = imgNamepath.split(".")[0]
             out.save(image_name + "_animegan1" + ".png")
-            print("图片保存成功！！")
+            print("save successful")
             imgShow = QPixmap(image_name + "_animegan1" + ".png").scaled(self.ui.label_4.size(), aspectMode=Qt.KeepAspectRatio)
             self.ui.label_4.setFixedSize(imgShow.width(), imgShow.height())
             self.ui.label_4.setScaledContents(True)
@@ -142,11 +135,11 @@ class Pic1:
                         out = out.squeeze(0).clip(-1, 1) * 0.5 + 0.5
                         out = to_pil_image(out)
                         contrast_enhancer = ImageEnhance.Contrast(out)
-                        img_enhanced_image = contrast_enhancer.enhance(2) # 2来控制饱和度 增强因子为0，1将产生黑白图像；为2.0将给出原始图像。
+                        img_enhanced_image = contrast_enhancer.enhance(2) 
                         enhanced_image = np.asarray(out)# can change to img_enhanced_image
                         videoWriter.write(enhanced_image) # can change to enhanced_image
                         cul += 1
-                        print('第{}张图'.format(cul))
+                        print('{}num pic'.format(cul))
                     else:
                         break
             videoWriter.release()
@@ -155,7 +148,7 @@ class Pic1:
             video_file = VideoFileClip(video).set_audio(audio_file)
             video_file.write_videofile(image_name + "_animation1" + ".mp4", fps=60)
             os.remove(video)
-            # 视频添加原音频
+            # add audio for video
             # input_audio = ffmpeg.input(audio_file)
             # input_video = ffmpeg.input(video)
 
@@ -165,7 +158,7 @@ class Pic1:
 
 if __name__ == '__main__':
     app = QApplication([])
-    # 显示创建的界面
-    MainWindow = Pic1()  # 创建窗体对象
-    MainWindow.ui.show()  # 显示窗体
-    app.exit(app.exec_())  # 程序关闭时退出进程
+    # UI designer
+    MainWindow = Pic1()  # window object
+    MainWindow.ui.show()  # show window
+    app.exit(app.exec_())  # cease process
